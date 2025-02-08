@@ -16,7 +16,7 @@ public partial class ToDoDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Item> Items { get; set; }
+    public virtual DbSet<User> Items { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,7 +24,7 @@ public partial class ToDoDbContext : DbContext
             .UseCollation("utf8mb4_0900_ai_ci")
             .HasCharSet("utf8mb4");
 
-        modelBuilder.Entity<Item>(entity =>
+        modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
