@@ -31,19 +31,19 @@ if (app.Environment.IsDevelopment())
 } 
 app.MapGet("/", () => "Hello World!");
 
-app.MapGet("/Items/{id}",async (int id, ToDoDbContext db) =>
+app.MapGet("/Items", async (ToDoDbContext db) =>
 {
-    return await db.Items.FindAsync(id) is Item item ? Results.Ok(item) : Results.NotFound();
+    return Results.Ok(await db.Items.ToListAsync());
 });
 
-app.MapPost("/tasks", async (ToDoDbContext db, Item task) =>
+app.MapPost("/Items", async (ToDoDbContext db, Item task) =>
 {
     db.Items.Add(task);
     await db.SaveChangesAsync();
     return Results.Created($"/tasks/{task.Id}", task);
 });
 
-app.MapPut("/tasks/{id}", async (int id, ToDoDbContext db, Item updatedTask) =>
+app.MapPut("/Items/{id}", async (int id, ToDoDbContext db, Item updatedTask) =>
 {
     var task = await db.Items.FindAsync(id);
     if (task is null)
@@ -58,7 +58,7 @@ app.MapPut("/tasks/{id}", async (int id, ToDoDbContext db, Item updatedTask) =>
     return Results.NoContent(); 
 });
 
-app.MapDelete("/tasks/{id}", async (int id, ToDoDbContext db) =>
+app.MapDelete("/Items/{id}", async (int id, ToDoDbContext db) =>
 {
     var task = await db.Items.FindAsync(id);
     if (task is null)
