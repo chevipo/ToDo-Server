@@ -16,7 +16,9 @@ public partial class ToDoDbContext : DbContext
     {
     }
 
-    public virtual DbSet<User> NewTables { get; set; }
+    public virtual DbSet<Item> Users { get; set; }
+    public virtual DbSet<Item> Items { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseMySql("name=ToDoDB", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
@@ -27,11 +29,11 @@ public partial class ToDoDbContext : DbContext
             .UseCollation("utf8mb4_0900_ai_ci")
             .HasCharSet("utf8mb4");
 
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.Entity<Item>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
-            entity.ToTable("new_table");
+            entity.ToTable("Items");
 
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
