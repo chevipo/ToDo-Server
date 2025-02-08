@@ -19,4 +19,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 8080
-CMD ["dotnet", "TodoApi.dll"]
+ENTRYPOINT ["dotnet", "TodoApi.dll"]
