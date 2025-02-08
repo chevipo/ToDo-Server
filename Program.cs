@@ -15,25 +15,25 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+builder.Services.AddDbContext<ToDoDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("ToDoDB"),
+    new MySqlServerVersion(new Version(8, 0, 2))));
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}
-// הוספת שירותי CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpecificOrigins", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000") 
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-builder.Services.AddControllers();
-
+} 
 app.MapGet("/", () => "Hello World!");
 
 app.MapGet("/tasks", async (ToDoDbContext db) =>
@@ -76,5 +76,4 @@ app.MapDelete("/tasks/{id}", async (int id, ToDoDbContext db) =>
     return Results.NoContent();
 });
 
-//
 app.Run();
