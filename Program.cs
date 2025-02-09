@@ -88,7 +88,11 @@ builder.Services.AddCors(options =>
     policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
+var connectionString = $"Server={builder.Configuration["DB_HOST"]};" +
+                      $"Database={builder.Configuration["DB_NAME"]};" +
+                      $"User={builder.Configuration["DB_USER"]};" +
+                      $"Password={builder.Configuration["DB_PASSWORD"]}";
+                      
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 var app = builder.Build();
