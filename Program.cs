@@ -88,23 +88,11 @@ builder.Services.AddCors(options =>
     policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-// הזרקת DbContext לאפליקציה
+var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
 builder.Services.AddDbContext<ToDoDbContext>(options =>
-{
-    var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
-    var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "3306"; // ברירת מחדל 3306
-    var dbName = Environment.GetEnvironmentVariable("DB_NAME");
-    var dbUser = Environment.GetEnvironmentVariable("DB_USER");
-    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
-
-    var connectionString = $"Server={dbHost};Port={3306};Database={dbName};User={dbUser};Password={dbPassword};";
-
-    options.UseMySql(connectionString, Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
-});
-
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 var app = builder.Build();
 
-// הפעלת Swagger 
 app.UseSwagger(); 
 app.UseSwaggerUI(options => 
 {
