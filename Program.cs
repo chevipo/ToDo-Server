@@ -1,77 +1,79 @@
 // using Microsoft.EntityFrameworkCore;
 // using TodoApi;
-// using Pomelo.EntityFrameworkCore.MySql;
-// using Microsoft.AspNetCore.Http.Features;
 
 // var builder = WebApplication.CreateBuilder(args);
-    
-// builder.Services.AddControllers();
 
+// // הוספת שירותי Swagger
 // builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
 
+// // הוספת שירות ה-CORS
 // builder.Services.AddCors(options =>
 // {
-//     options.AddPolicy("AllowSpecificOrigins", policy =>
-//     {
-//         policy.AllowAnyOrigin()
-//               .AllowAnyHeader()
-//               .AllowAnyMethod();
-//     });
+//     options.AddPolicy("AllowAll",
+//     policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 // });
-// builder.Services.AddDbContext<ToDoDbContext>(options =>
-//     options.UseMySql(builder.Configuration.GetConnectionString("ToDoDB"),
-//     new MySqlServerVersion(new Version(8, 0, 2))));
 
+// var connectionString = $"Server={builder.Configuration["DB_HOST"]};" +
+//                       $"Database={builder.Configuration["DB_NAME"]};" +
+//                       $"User={builder.Configuration["DB_USER"]};" +
+//                       $"Password={builder.Configuration["DB_PASSWORD"]}";
+
+// builder.Services.AddDbContext<ToDoDbContext>(options =>
+//     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 // var app = builder.Build();
-// if (app.Environment.IsDevelopment())
+
+// app.UseSwagger(); 
+// app.UseSwaggerUI(options => 
 // {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// } 
+//     options.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDo API V1"); 
+//     options.RoutePrefix = string.Empty;
+// });
+
+// // שימוש ב-CORS עבור כל הבקשות
+// app.UseCors("AllowAll");
+
 // app.MapGet("/", () => "Hello World!");
 
-// app.MapGet("/tasks", async (ToDoDbContext db) =>
+// // שליפת כל המשימות
+// app.MapGet("/items", async (ToDoDbContext dbContext) =>
 // {
-//     return Results.Ok(await db.Items.ToListAsync());
+//     var tasks = await dbContext.Items.ToListAsync();
+//     return tasks;
 // });
 
-// app.MapPost("/tasks", async (ToDoDbContext db, User task) =>
+// // הוספת משימה חדשה
+// app.MapPost("/items", async (ToDoDbContext db, Item task) =>
 // {
 //     db.Items.Add(task);
 //     await db.SaveChangesAsync();
-//     return Results.Created($"/tasks/{task.Id}", task);
+//     return Results.Ok($"המשימה '{task.Name}' נוספה בהצלחה.");
 // });
 
-// app.MapPut("/tasks/{id}", async (int id, ToDoDbContext db, User updatedTask) =>
+// // עדכון משימה לפי ID
+// app.MapPut("/items/{id}", async (ToDoDbContext dbContext, int id, Item updatedTask) =>
 // {
-//     var task = await db.Items.FindAsync(id);
-//     if (task is null)
-//     {
-//         return Results.NotFound();
-//     }
-
+//     var task = await dbContext.Items.FindAsync(id);
+//     if (task == null) return Results.NotFound("המשימה לא נמצאה.");
 //     task.Name = updatedTask.Name;
 //     task.IsComplete = updatedTask.IsComplete;
-    
-//     await db.SaveChangesAsync();
-//     return Results.NoContent(); 
+//     await dbContext.SaveChangesAsync();
+//     return Results.Ok($"המשימה בעמדה {id} עודכנה ל-{updatedTask}.");
 // });
 
-// app.MapDelete("/tasks/{id}", async (int id, ToDoDbContext db) =>
+// // מחיקת משימה לפי ID
+// app.MapDelete("/items/{id}", async (ToDoDbContext dbContext, int id) =>
 // {
-//     var task = await db.Items.FindAsync(id);
-//     if (task is null)
-//     {
-//         return Results.NotFound();
-//     }
-
-//     db.Items.Remove(task);
-//     await db.SaveChangesAsync();
-//     return Results.NoContent();
+//     var task = await dbContext.Items.FindAsync(id);
+//     if (task == null) return Results.NotFound("המשימה לא נמצאה.");
+//     dbContext.Items.Remove(task);
+//     await dbContext.SaveChangesAsync();
+//     return Results.Ok($"המשימה '{task.Name}' נמחקה.");
 // });
 
 // app.Run();
+
+
 using Microsoft.EntityFrameworkCore;
 using TodoApi;
 
@@ -88,19 +90,17 @@ builder.Services.AddCors(options =>
     policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-var connectionString = $"Server={builder.Configuration["DB_HOST"]};" +
-                      $"Database={builder.Configuration["DB_NAME"]};" +
-                      $"User={builder.Configuration["DB_USER"]};" +
-                      $"Password={builder.Configuration["DB_PASSWORD"]}";
-                      
+var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
 var app = builder.Build();
 
-app.UseSwagger(); 
-app.UseSwaggerUI(options => 
+// הפעלת Swagger 
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDo API V1"); 
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDo API V1");
     options.RoutePrefix = string.Empty;
 });
 
@@ -117,10 +117,10 @@ app.MapGet("/items", async (ToDoDbContext dbContext) =>
 });
 
 // הוספת משימה חדשה
-app.MapPost("/items", async (ToDoDbContext db, Item task) =>
+app.MapPost("/items", async (ToDoDbContext dbContext, Item task) =>
 {
-    db.Items.Add(task);
-    await db.SaveChangesAsync();
+    dbContext.Items.Add(task);
+    await dbContext.SaveChangesAsync();
     return Results.Ok($"המשימה '{task.Name}' נוספה בהצלחה.");
 });
 
