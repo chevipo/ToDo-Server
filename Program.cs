@@ -90,13 +90,17 @@ builder.Services.AddCors(options =>
 
 // הזרקת DbContext לאפליקציה
 builder.Services.AddDbContext<ToDoDbContext>(options =>
-    options.UseMySql("Server=localhost;Port=3306;Database=db;User=root;Password=5708571cheviP@", 
-    Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql")));
+{
+    var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+    var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "3306"; // ברירת מחדל 3306
+    var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+    var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
-//builder.Services.AddDbContext<ToDoDbContext>(options =>
-//     options.UseMySql(builder.Configuration.GetConnectionString("ToDoDB"),
-//     new MySqlServerVersion(new Version(8, 0, 2))));
+    var connectionString = $"Server={dbHost};Port={3306};Database={dbName};User={dbUser};Password={dbPassword};";
 
+    options.UseMySql(connectionString, Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
+});
 
 var app = builder.Build();
 
@@ -121,10 +125,10 @@ app.MapGet("/items", async (ToDoDbContext dbContext) =>
 });
 
 // הוספת משימה חדשה
-app.MapPost("/items", async (ToDoDbContext dbContext,  Item task) =>
+app.MapPost("/items", async (ToDoDbContext db, Item task) =>
 {
-    dbContext.Items.Add(task);
-    await dbContext.SaveChangesAsync();
+    db.Items.Add(task);
+    await db.SaveChangesAsync();
     return Results.Ok($"המשימה '{task.Name}' נוספה בהצלחה.");
 });
 
