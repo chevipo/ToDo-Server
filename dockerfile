@@ -1,22 +1,24 @@
-# Use the official .NET runtime as a base image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
+EXPOSE 80
+EXPOSE 443
 
-# Use the official .NET SDK to build the application
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ENV ASPNETCORE_URLS=http://+:80
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG configuration=Release
 WORKDIR /src
-
-# Copy and restore dependencies
 COPY ["TodoApi.csproj", "./"]
 RUN dotnet restore "TodoApi.csproj"
-
-# Copy the rest of the app and build it
 COPY . .
-RUN dotnet publish "TodoApi.csproj" -c Release -o /app/publish
+WORKDIR "/src/."
+RUN dotnet build "TodoApi.csproj" -c $configuration -o /app/build
 
-# Final stage: run the application
+FROM build AS publish
+ARG configuration=Release
+RUN dotnet publish "TodoApi.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
+
 FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-EXPOSE 8080
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "TodoApi.dll"]
