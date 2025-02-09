@@ -72,8 +72,6 @@
 // });
 
 // app.Run();
-
-
 using Microsoft.EntityFrameworkCore;
 using TodoApi;
 
@@ -146,3 +144,4 @@ app.MapDelete("/items/{id}", async (ToDoDbContext dbContext, int id) =>
 });
 
 app.Run();
+
